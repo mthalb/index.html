@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Gaming Hub | 5-Game Edition</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #03030a;
+            --card-bg: rgba(5, 5, 12, 0.7);
+            --text-color: #ffffff;
+            
+            /* Dynamic Theme Variables - Controlled by JavaScript */
+            --game-accent: #00f0ff;
+            --game-accent-glow: rgba(0, 240, 255, 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column; /* Stacks the isolated title above the dashboard layout */
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            position: relative;
+            padding: 40px 20px;
+        }
+
+        /* Ambient Wallpaper Backdrop */
+        .bg-wallpaper {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            filter: blur(2px) brightness(0.75);
+            transform: scale(1.06);
+            z-index: -3;
+            transition: background-image 0.6s ease-in-out;
+            pointer-events: none;
+        }
+
+        /* Lightning Animation Trigger Layer */
+        @keyframes lightning-strike {
+            0%, 92%, 94%, 100% { opacity: 0; }
+            93% { opacity: 0.2; background: #fff; }
+            93.5% { opacity: 0.35; background: var(--game-accent); }
+            95% { opacity: 0.1; background: #fff; }
+        }
+
+        .lightning-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -2;
+        }
+        
+        .lightning-strike-active {
+            animation: lightning-strike 0.5s ease-out forwards;
+        }
+
+        /* --- SEPARATE NAME HIGHLIGHT ON TOP --- */
+        .top-banner-name {
+            font-size: 3.5rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 6px;
+            color: #ffffff;
+            margin-bottom: 30px;
+            position: relative;
+            text-align: center;
+            transition: text-shadow 0.5s ease;
+            /* Creates a dramatic neon aura that pulls colors from the active theme */
+            text-shadow: 0 0 10px #fff, 
+                         0 0 20px var(--game-accent), 
+                         0 0 40px var(--game-accent), 
+                         0 0 80px var(--game-accent);
+            animation: text-pulse 2s infinite alternate;
+        }
+
+        /* Gentle pulse animation mimicking a live neon electrical tube */
+        @keyframes text-pulse {
+            0% {
+                transform: scale(1);
+                opacity: 0.95;
+            }
+            100% {
+                transform: scale(1.02);
+                opacity: 1;
+                filter: brightness(1.2);
+            }
+        }
+
+        /* Master Dashboard Window Grid */
+        .dashboard-container {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 850px;
+            border-radius: 24px;
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 2px solid var(--game-accent);
+            box-shadow: 0 0 35px var(--game-accent-glow), 
+                        inset 0 0 20px rgba(255, 255, 255, 0.02);
+            overflow: hidden;
+            transition: border-color 0.5s ease, box-shadow 0.5s ease;
+        }
+
+        /* Left Hand Game Selection Dock */
+        .sidebar-dock {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 25px 15px;
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .dock-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #65658a;
+            margin-bottom: 15px;
+            padding-left: 10px;
+            font-weight: 800;
+        }
+
+        .game-btn {
+            background: transparent;
+            border: none;
+            color: #8a8ab0;
+            padding: 14px 15px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+            text-align: left;
+            cursor: pointer;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .game-btn i {
+            font-size: 1.1rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        .game-btn:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.04);
+            transform: translateX(4px);
+        }
+
+        /* Active Dynamic Side Rail Selectors */
+        .game-btn.active {
+            color: #fff;
+            background: var(--game-accent);
+            box-shadow: 0 0 15px var(--game-accent-glow);
+        }
+        
+        .game-btn.active[data-game="pubg"], 
+        .game-btn.active[data-game="cod"] {
+            color: #000 !important;
+        }
+
+        /* Right Hand Statistics & Identity Core Panel */
+        .main-display {
+            padding: 35px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        /* Avatar Container Setup */
+        .avatar-wrapper {
+            position: relative;
+            width: 110px;
+            height: 110px;
+            margin-bottom: 20px;
+        }
+
+        .avatar {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #fff;
+            box-shadow: 0 0 20px var(--game-accent-glow);
+            transition: box-shadow 0.5s ease;
+        }
+
+        .uid-tag {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #fff;
+            border: 1px solid var(--game-accent);
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 30px;
+        }
+
+        .uid-tag:hover {
+            box-shadow: 0 0 15px var(--game-accent);
+            transform: scale(1.03);
+        }
+
+        .uid-tag i { margin-left: 10px; font-size: 0.8rem; opacity: 0.7; }
+
+        /* Performance Metric Card Grids */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 16px 10px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--game-accent);
+            background: rgba(0, 0, 0, 0.45);
+        }
+
+        .stat-value {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #fff;
+            display: block;
+            margin-bottom: 4px;
+            text-shadow: 0 0 8px var(--game-accent-glow);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #9292bd;
+        }
+
+        /* Hyperlink Hub Blocks */
+        .links-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .social-link {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            border-radius: 12px;
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            transition: all 0.3s;
+        }
+
+        .social-link:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--game-accent);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.03);
+            transform: scale(1.01);
+        }
+
+        /* Universal Feedback Toast Component */
+        .toast {
+            position: fixed;
+            bottom: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #fff;
+            color: #000;
+            font-weight: bold;
+            padding: 12px 30px;
+            border-radius: 50px;
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.3);
+            transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 10;
+        }
+        .toast.show { bottom: 35px; }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 768px) {
+            .top-banner-name { font-size: 2.5rem; margin-bottom: 20px; }
+            .dashboard-container { grid-template-columns: 1fr; }
+            .sidebar-dock { 
+                flex-direction: row; 
+                overflow-x: auto; 
+                padding: 15px;
+                border-right: none;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            }
+            .game-btn { white-space: nowrap; padding: 10px 15px; }
+            .dock-title { display: none; }
+        }
+
+        @media (max-width: 520px) {
+            .stats-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Ambient Wallpaper Backdrop -->
+    <div class="bg-wallpaper" id="bgWallpaper"></div>
+
+    <!-- Active Lightning Sheet Overlay -->
+    <div class="lightning-overlay" id="lightningSheet"></div>
+
+    <!-- Isolated Dynamic Top Heading Banner -->
+    <div class="top-banner-name" id="mainGamerTag">Zephyr_FF</div>
+
+    <!-- Master Dashboard Container Grid Frame -->
+    <div class="dashboard-container">
+        
+        <!-- Sidebar Menu Rail containing the 5 Games -->
+        <div class="sidebar-dock">
+            <div class="dock-title">Select Game</div>
+            <button class="game-btn active" data-game="freefire" onclick="switchGame('freefire')">
+                <i class="fas fa-fire"></i> Free Fire
+            </button>
+            <button class="game-btn" data-game="pubg" onclick="switchGame('pubg')">
+                <i class="fas fa-crosshairs"></i> PUBG Mobile
+            </button>
+            <button class="game-btn" data-game="cod" onclick="switchGame('cod')">
+                <i class="fas fa-shield-alt"></i> COD Mobile
+            </button>
+            <button class="game-btn" data-game="bloodstrike" onclick="switchGame('bloodstrike')">
+                <i class="fas fa-skull"></i> Blood Strike
+            </button>
+            <button class="game-btn" data-game="gtav" onclick="switchGame('gtav')">
+                <i class="fas fa-car"></i> GTA V Online
+            </button>
+        </div>
+
+        <!-- Metric Display Card Face -->
+        <div class="main-display">
+            <!-- Profile Avatar Ring -->
+            <div class="avatar-wrapper">
+                <img id="gameAvatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=freefire" alt="Avatar Status" class="avatar">
+            </div>
+
+            <!-- Identifiers Layout -->
+            <div class="uid-tag" onclick="copyUID()">
+                ID: <span id="uidDisplay">573829104</span> <i class="far fa-copy"></i>
+            </div>
+
+            <!-- Dynamic Triple Stat Cards Layout Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-value" id="stat1">42.5%</span>
+                    <span class="stat-label" id="lbl1">Headshot %</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value" id="stat2">Heroic</span>
+                    <span class="stat-label" id="lbl2">Current Tier</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value" id="stat3">842</span>
+                    <span class="stat-label" id="lbl3">Squad Wins</span>
+                </div>
+            </div>
+
+            <!-- Social Media Routing Channel Elements -->
+            <div class="links-container">
+                <a href="https://discord.com" target="_blank" class="social-link">
+                    <span><i class="fab fa-discord" style="color:#5865F2;"></i> &nbsp; Join Team Discord</span>
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+                <a href="https://youtube.com" target="_blank" class="social-link">
+                    <span><i class="fab fa-youtube" style="color:#FF0000;"></i> &nbsp; Watch Highlights</span>
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+                <a href="https://instagram.com" target="_blank" class="social-link">
+                    <span><i class="fab fa-instagram" style="color:#E1306C;"></i> &nbsp; Instagram Feed</span>
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clipboard Confirmation Toast Box Container -->
+    <div class="toast" id="toast">ID Copied ⚡</div>
+
+    <script>
+        // Data Registry housing configurations for all 5 Gaming Platform targets
+        const gameData = {
+            freefire: {
+                name: "ELITE TANVIR",
+                uid: "5877360318",
+                accent: "#ff6a00",
+                glow: "rgba(255, 106, 0, 0.35)",
+                wallpaper: "https://scontent.fcgp27-1.fna.fbcdn.net/v/t39.30808-6/716010735_2779641782400073_6923271611512800187_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=127cfc&_nc_ohc=PWwrZAi7A6EQ7kNvwF3qspM&_nc_oc=Ado_gpBW_iOcdmEjYW2XLOssu--0PDDBF3hrRt7CedA93XFH53OeNQ47yk4FRVL9wrk&_nc_zt=23&_nc_ht=scontent.fcgp27-1.fna&_nc_gid=SQwQFhAViPW3GqwnsW8Fdw&_nc_ss=7b2a8&oh=00_Af885AEeKBdb69fERud_14SBZ76L_hCFujzODPVpUYMS-Q&oe=6A278496", 
+                avatar: "data:image/jpeg;base64,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",
+                stats: ["78%", "GRANDMASTER", "2200"],
+                labels: ["Headshot %", "Current Tier", "Squad Wins"]
+            },
+            pubg: {
+                name: "BDTANVER",
+                uid: "5109283741",
+                accent: "#ffea00",
+                glow: "rgba(255, 234, 0, 0.3)",
+                wallpaper: "https://scontent.fcgp27-1.fna.fbcdn.net/v/t39.30808-6/717616609_2779641785733406_6451649618592849664_n.jpg?_nc_cat=105&ccb=1-7&_nc_sid=127cfc&_nc_ohc=Xwfpe0PCw1sQ7kNvwGcHrbN&_nc_oc=AdpY86Ca5ewR2ZENCcq31l58c95S2D8OETipT0Ym89HDwrtn6_DphsC_04DQ34ZqwLk&_nc_zt=23&_nc_ht=scontent.fcgp27-1.fna&_nc_gid=INUwgmxoeaXuBOM2HPavrw&_nc_ss=7b2a8&oh=00_Af9W68vSnFt27LhkxlSKT7aiMxxle3LAINNJVwh8DHiFtA&oe=6A279C5E",
+                avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSTiau9uXIyST8xfIbOrE4DtA0P2zzfa3qSZg&s",
+                stats: ["6.20", "Ace Master", "310"],
+                labels: ["F/D Ratio", "Rank Rating", "Chicken Dinners"]
+            },
+            cod: {
+                name: "CODM_Zephyr",
+                uid: "6829104829104",
+                accent: "#00f0ff",
+                glow: "rgba(0, 240, 255, 0.35)",
+                wallpaper: "https://admin.sportshackster.com/WallPaperMedia/PlayerWallPaperImage/cod-8_63862732505825.3.jpg",
+                avatar: "https://admin.sportshackster.com/WallPaperMedia/PlayerWallPaperImage/cod-8_63862732505825.3.jpg",
+                stats: ["2.84", "Legendary", "24,500"],
+                labels: ["K/D Ratio", "Rank Tier", "Total Kills"]
+            },
+            bloodstrike: {
+                name: "Strike_Zephyr",
+                uid: "BSTRK-948210",
+                accent: "#ff0055",
+                glow: "rgba(255, 0, 85, 0.35)",
+                wallpaper: "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?q=80&w=1200",
+                avatar: "https://i.pinimg.com/originals/cf/d8/b1/cfd8b132b15f8b03e0fbe00e79651ed8.jpg",
+                stats: ["3.15", "Legend", "124"],
+                labels: ["K/D Ratio", "Striker Rank", "Matches Won"]
+            },
+            gtav: {
+                name: "CEO_Zephyr",
+                uid: "SocialClub-ZphR",
+                accent: "#10b981",
+                glow: "rgba(16, 185, 129, 0.35)",
+                wallpaper: "https://images.unsplash.com/photo-1547949003-9792a18a2601?q=80&w=1200",
+                avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=gtav",
+                stats: ["$42.5M", "lvl 280", "42%"],
+                labels: ["Total Cash", "Rank Level", "Heist Success Rate"]
+            }
+        };
+
+        // UI Core Panel Switch Execution Pipeline Function
+        function switchGame(gameKey) {
+            // Update Active Elements Class Indicators
+            document.querySelectorAll('.game-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-game="${gameKey}"]`).classList.add('active');
+
+            const data = gameData[gameKey];
+            
+            // Trigger Dynamic Custom Animated Flash Overlay Effect Sequence
+            const flashSheet = document.getElementById('lightningSheet');
+            flashSheet.classList.remove('lightning-strike-active');
+            void flashSheet.offsetWidth; // Force Reflow engine trigger layout reset mechanism
+            flashSheet.classList.add('lightning-strike-active');
+
+            // Apply Theme Accent Colors Properties adjustments
+            document.documentElement.style.setProperty('--game-accent', data.accent);
+            document.documentElement.style.setProperty('--game-accent-glow', data.glow);
+
+            // Update Graphical Background Wallpapers
+            document.getElementById('bgWallpaper').style.backgroundImage = `url('${data.wallpaper}')`;
+
+            // Update Isolated Top Header Name along with inner stats fields
+            document.getElementById('mainGamerTag').innerText = data.name;
+            document.getElementById('uidDisplay').innerText = data.uid;
+            document.getElementById('gameAvatar').src = data.avatar;
+
+            // Swap values data fields strings
+            document.getElementById('stat1').innerText = data.stats[0];
+            document.getElementById('stat2').innerText = data.stats[1];
+            document.getElementById('stat3').innerText = data.stats[2];
+
+            // Swap matching dynamic descriptions labels tags indicators 
+            document.getElementById('lbl1').innerText = data.labels[0];
+            document.getElementById('lbl2').innerText = data.labels[1];
+            document.getElementById('lbl3').innerText = data.labels[2];
+        }
+
+        // Clipboards Copy Wrapper Command String Execution
+        function copyUID() {
+            const uidText = document.getElementById('uidDisplay').innerText;
+            navigator.clipboard.writeText(uidText).then(() => {
+                const toast = document.getElementById('toast');
+                toast.classList.add('show');
+                
+                const icon = document.querySelector('.uid-tag i');
+                icon.className = 'fas fa-check';
+                
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    icon.className = 'far fa-copy';
+                }, 1800);
+            });
+        }
+
+        // Initialize Application State Context on primary asset loader complete sequence
+        switchGame('freefire');
+    </script>
+</body>
+</html>
